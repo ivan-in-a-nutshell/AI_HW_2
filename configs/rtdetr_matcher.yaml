@@ -1,0 +1,5 @@
+# Exp (matching cost): weigh GIoU as much as L1 in the Hungarian cost; normalised L1 is tiny for
+# small boxes, so GIoU separates candidate queries better (default class 2, bbox 5, giou 2).
+base: rtdetr_base.yaml
+patch:
+  matcher_cost: {class: 2, bbox: 5, giou: 5}

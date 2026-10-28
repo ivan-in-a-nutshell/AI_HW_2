@@ -1,0 +1,5 @@
+# Exp (assignment/loss): TAL assigns the top-13 anchor points per object instead of top-10,
+# giving small objects (few points inside the box) more positives.
+base: yolo11s_base.yaml
+patch:
+  tal_topk: 13

@@ -1,0 +1,21 @@
+# competition data (10+ GB) and derived datasets
+multiple-object-video-detection-hw-2-ucu-ai-2026
+prepared*/
+outputs/
+
+# training artifacts
+/runs/
+*.pt
+*.pth
+*.onnx
+wandb/
+
+# python / notebooks
+.venv/
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
+.DS_Store
+
+# submissions are produced on Kaggle; local ones come from dry runs
+submission*.csv

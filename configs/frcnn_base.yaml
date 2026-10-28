@@ -1,0 +1,22 @@
+# Two-stage baseline: Faster R-CNN R50-FPN v2 with torchvision defaults, COCO weights.
+# Only changes from defaults: 8 classes, 500 detections/image (dense scenes, LB cap), low score threshold.
+arch: faster_rcnn
+min_size: 720            # 16:9 frames -> 1280x720 network input (benchmark protocol)
+max_size: 1280
+anchor_sizes: [32, 64, 128, 256, 512]   # one size per FPN level P2-P6 (torchvision default)
+aspect_ratios: [0.5, 1.0, 2.0]
+detections_per_img: 500
+score_thresh: 0.01
+nms_thresh: 0.5
+rpn_post_nms_top_n_train: 2000
+rpn_post_nms_top_n_test: 1000
+box_batch_size_per_image: 512
+box_positive_fraction: 0.25
+box_loss: smooth_l1
+epochs: 12
+batch_size: 4            # per GPU
+lr: 0.01                 # for a global batch of lr_batch frames
+lr_batch: 8
+lr_schedule: step
+lr_steps: [8, 11]
+warmup_iters: 500

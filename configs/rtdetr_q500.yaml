@@ -1,0 +1,5 @@
+# Exp: 500 object queries (scene density up to 180 objects, 500 scored detections).
+base: rtdetr_base.yaml
+model: models/rtdetr-l-q500.yaml
+weights: rtdetr-l.pt
+max_det: 500

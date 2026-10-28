@@ -1,0 +1,4 @@
+# Exp 3 (loss): weaker focusing, more weight on positives.
+base: retina_anchors.yaml
+focal_alpha: 0.5
+focal_gamma: 1.5

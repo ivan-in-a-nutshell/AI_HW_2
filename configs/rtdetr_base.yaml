@@ -1,0 +1,16 @@
+# Query-based baseline: RT-DETR-L (300 queries, Hungarian matching, no NMS), COCO weights.
+framework: ultralytics
+model: rtdetr-l.pt
+imgsz: 1280
+time: 1.0                # same 2 GPU-h budget as YOLO11s
+epochs: 100
+batch: 8                 # global batch over both GPUs (memory-bound at 1280)
+optimizer: AdamW
+lr0: 0.0001
+weight_decay: 0.0001
+warmup_epochs: 1
+warmup_bias_lr: 0.0       # default 0.1 suits SGD 0.01, not AdamW 1e-4
+max_det: 300
+cache: false
+seed: 42
+plots: false

@@ -1,0 +1,4 @@
+# Exp: extra stride-4 (P2) detection head; backbone + P3-P5 neck transferred from yolo11s.pt.
+base: yolo11s_base.yaml
+model: models/yolo11s-p2.yaml
+weights: yolo11s.pt

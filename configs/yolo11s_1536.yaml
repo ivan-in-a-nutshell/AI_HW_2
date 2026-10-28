@@ -1,0 +1,4 @@
+# Exp: input resolution 1536 (search range 960 / 1280 / 1536).
+base: yolo11s_base.yaml
+imgsz: 1536
+batch: 8

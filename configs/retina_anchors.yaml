@@ -1,0 +1,3 @@
+# Exp 1: anchors from the EDA size distribution (P3 base 16 px instead of 32 px).
+base: retina_base.yaml
+anchor_sizes: [16, 32, 64, 128, 256]

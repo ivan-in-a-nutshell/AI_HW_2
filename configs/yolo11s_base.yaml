@@ -1,0 +1,13 @@
+# Anchor-free baseline: YOLO11s (TAL assignment, CIoU + DFL), COCO weights, Ultralytics defaults.
+framework: ultralytics
+model: yolo11s.pt
+imgsz: 1280              # benchmark protocol input size
+time: 1.0                # wall-clock hours on 2x T4 = 2 GPU-h budget; overrides epochs
+optimizer: SGD            # explicit; "auto" picks by iteration count, which `time` changes
+lr0: 0.01
+epochs: 100
+batch: 16                # global batch over both GPUs
+max_det: 500             # validation detections per image (dense scenes, LB cap)
+cache: false
+seed: 42
+plots: false

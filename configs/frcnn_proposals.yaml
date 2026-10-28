@@ -1,0 +1,4 @@
+# Exp 2: twice as many RPN proposals for dense scenes (up to 180 objects / frame).
+base: frcnn_anchors.yaml
+rpn_post_nms_top_n_train: 4000
+rpn_post_nms_top_n_test: 2000

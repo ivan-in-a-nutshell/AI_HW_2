@@ -1,0 +1,4 @@
+# Exp 3 (loss): GIoU on decoded boxes instead of smooth-L1 on deltas in the RoI head.
+base: frcnn_anchors.yaml
+box_loss: giou
+giou_weight: 10.0

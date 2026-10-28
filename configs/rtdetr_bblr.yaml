@@ -1,0 +1,5 @@
+# Exp: backbone (HGNet layers 0-9) trains at 0.1x the transformer learning rate.
+base: rtdetr_base.yaml
+patch:
+  backbone_lr_mult: 0.1
+  backbone_layers: 10
