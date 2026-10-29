@@ -19,6 +19,7 @@ NUM_CLASSES = len(CLASSES)
 MAX_SIDE = 1920  # no test frame is wider than this
 COMPETITION = "multiple-object-video-detection-hw-2-ucu-ai-2026"
 
+KAGGLE_NOTEBOOKS = Path("/kaggle/input/notebooks/ivanzarytskyics")
 
 def find_raw_root() -> Path:
     """Locate the competition data: $VISDET_RAW, Kaggle input mount, or the local copy."""
@@ -36,7 +37,7 @@ def find_raw_root() -> Path:
 def find_prepared(name: str = "prepared") -> Path:
     """Locate a prepared dataset: $VISDET_PREPARED (default name only), a Kaggle input, or ./<name>."""
     env = os.environ.get("VISDET_PREPARED") if name == "prepared" else None
-    candidates = [env, *sorted(Path("/kaggle/input").glob(f"*/{name}")), *sorted(Path("/kaggle/input").glob(f"*/*/{name}")),
+    candidates = [env, *sorted(KAGGLE_NOTEBOOKS.glob(f"*/{name}")),
                   Path(__file__).resolve().parents[2] / name]
     for c in candidates:
         if c and (Path(c) / "images.csv").is_file():

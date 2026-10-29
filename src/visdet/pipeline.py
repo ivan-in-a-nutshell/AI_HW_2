@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from .data import fold_split
+from .data import KAGGLE_NOTEBOOKS, fold_split
 from .evaluate import build_gt, density_breakdown, evaluate, format_stats, log_result
 from .infer import EnsemblePredictor, TiledPredictor, UltralyticsPredictor, predict_eval_frames
 from .ul_utils import evaluate_ultralytics, is_rtdetr, train_ultralytics, write_tile_data, write_yolo_data
@@ -41,8 +41,7 @@ class Spec:
 
 def find_weights(run: str, runs_dir: Path) -> Path:
     """Checkpoint of ``run`` in this session's runs or in an attached notebook output (Kaggle)."""
-    for p in [Path(runs_dir) / run / "weights" / "best.pt", *Path("/kaggle/input").glob(f"*/runs/{run}/weights/best.pt"),
-              *Path("/kaggle/input").glob(f"*/*/runs/{run}/weights/best.pt")]:
+    for p in [Path(runs_dir) / run / "weights" / "best.pt", *KAGGLE_NOTEBOOKS.glob(f"*/runs/{run}/weights/best.pt")]:
         if p.exists():
             return p
     raise FileNotFoundError(f"no checkpoint for {run}; train it or attach the notebook output that has it")
