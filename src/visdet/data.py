@@ -24,7 +24,7 @@ def find_raw_root() -> Path:
     """Locate the competition data: $VISDET_RAW, Kaggle input mount, or the local copy."""
     candidates = [
         os.environ.get("VISDET_RAW"),
-        f"/kaggle/input/{COMPETITION}",
+        f"/kaggle/input/competitions/{COMPETITION}",
         Path(__file__).resolve().parents[2] / COMPETITION,
     ]
     for c in candidates:
