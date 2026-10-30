@@ -1,0 +1,31 @@
+arch: faster_rcnn
+min_size: 720
+max_size: 1280
+anchor_sizes:
+- 32
+- 64
+- 128
+- 256
+- 512
+aspect_ratios:
+- 0.5
+- 1.0
+- 2.0
+detections_per_img: 500
+score_thresh: 0.01
+nms_thresh: 0.5
+rpn_post_nms_top_n_train: 2000
+rpn_post_nms_top_n_test: 1000
+box_batch_size_per_image: 512
+box_positive_fraction: 0.25
+box_loss: smooth_l1
+epochs: 12
+batch_size: 4
+lr: 0.01
+lr_batch: 8
+lr_schedule: step
+lr_steps:
+- 8
+- 11
+warmup_iters: 500
+name: frcnn_base
