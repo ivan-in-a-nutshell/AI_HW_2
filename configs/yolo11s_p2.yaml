@@ -2,3 +2,4 @@
 base: yolo11s_base.yaml
 model: models/yolo11s-p2.yaml
 weights: yolo11s.pt
+batch: 8                 # 4 per GPU: the stride-4 grid makes TAL assignment OOM at 8 per GPU on a T4

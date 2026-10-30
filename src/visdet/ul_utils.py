@@ -269,6 +269,11 @@ def evaluate_ultralytics(weights: Path, cfg: dict, raw_root: Path, val_rows: pd.
               val_rows[["file_name", "out_w", "out_h"]].head(55).itertuples(index=False)]
     stats["fps"] = measure_fps(predictor, frames)
     print(run_id, format_stats(stats), f"fps {stats['fps']:.1f}")
+    del predictor  # release the GPU memory before the next training run starts its DDP workers
+    import gc, torch
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     if log:
         hist = pd.read_csv(run_dir / "results.csv") if (run_dir / "results.csv").exists() else None
         if hist is not None:

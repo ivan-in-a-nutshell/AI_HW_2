@@ -1,0 +1,16 @@
+framework: ultralytics
+model: yolo11s.pt
+imgsz: 960
+time: 1.0
+optimizer: SGD
+lr0: 0.01
+epochs: 100
+batch: 16
+max_det: 500
+cache: false
+seed: 42
+plots: false
+name: yolo11s_960
+gpu_hours: 2.03
+n_gpus: 2
+inference: {}
