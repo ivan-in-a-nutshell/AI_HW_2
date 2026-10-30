@@ -1,0 +1,32 @@
+arch: retinanet
+min_size: 720
+max_size: 1280
+anchor_sizes:
+- 16
+- 32
+- 64
+- 128
+- 256
+scales_per_octave: 3
+aspect_ratios:
+- 0.5
+- 1.0
+- 2.0
+detections_per_img: 500
+topk_candidates: 1000
+score_thresh: 0.01
+nms_thresh: 0.5
+fg_iou_thresh: 0.5
+bg_iou_thresh: 0.4
+focal_alpha: 0.5
+focal_gamma: 1.5
+epochs: 12
+batch_size: 4
+lr: 0.005
+lr_batch: 8
+lr_schedule: step
+lr_steps:
+- 8
+- 11
+warmup_iters: 500
+name: retina_focal
