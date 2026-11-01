@@ -163,6 +163,7 @@ def _scale_backbone_lr(optimizer, model):
     p = _patch()
     if "backbone_lr_mult" not in p:
         return optimizer
+    model = getattr(model, "module", model)  # DDP wraps the model; its parameters are the same tensors
     layers = model.model[: p.get("backbone_layers", 10)]
     backbone = {id(q) for q in layers.parameters()}
     groups = []
