@@ -265,7 +265,10 @@ def evaluate_ultralytics(weights: Path, cfg: dict, raw_root: Path, val_rows: pd.
     dets = predict_eval_frames(predictor, raw_root, val_rows, desc=f"eval {run_id}")
     stats = evaluate(build_gt(val_rows, boxes), dets) | density_breakdown(val_rows, boxes, dets)
     run_dir = Path(weights).parents[1]
-    dets[dets["score"] >= 0.01].round(2).to_csv(run_dir / f"val_dets_{run_id}.csv.gz", index=False)
+    # checkpoints reused from an attached Kaggle output are read-only: keep the detections in ./val_dets then
+    dets_dir = run_dir if os.access(run_dir, os.W_OK) else Path("val_dets")
+    dets_dir.mkdir(parents=True, exist_ok=True)
+    dets[dets["score"] >= 0.01].round(2).to_csv(dets_dir / f"val_dets_{run_id}.csv.gz", index=False)
     frames = [load_frame(Path(raw_root) / f, (w, h)) for f, w, h in
               val_rows[["file_name", "out_w", "out_h"]].head(55).itertuples(index=False)]
     stats["fps"] = measure_fps(predictor, frames)
