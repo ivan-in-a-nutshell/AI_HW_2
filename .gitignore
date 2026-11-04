@@ -19,3 +19,4 @@ __pycache__/
 
 # submissions are produced on Kaggle; local ones come from dry runs
 submission*.csv
+val_dets/

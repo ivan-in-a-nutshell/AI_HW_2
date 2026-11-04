@@ -4,18 +4,26 @@ A :class:`Spec` is the best detector of notebooks 03-06 plus *one* change: train
 ignore-region masking, tiles), augmentation/model settings (config overrides), or the inference
 strategy (TTA, tiles, ensembles). :class:`Pipeline` trains and evaluates specs on any fold under the
 benchmark protocol and writes the test submission of a spec.
+
+The whole notebook needs more than one 12-hour Kaggle session. :meth:`Pipeline.run` therefore never
+raises: a run that would not fit in the session stops all later work, so the notebook still finishes and
+its output can be attached to the next session, where :func:`carry_over` restores everything done so far.
 """
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import time
+import traceback
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import pandas as pd
 import yaml
 
-from .data import KAGGLE_NOTEBOOKS, fold_split
-from .evaluate import build_gt, density_breakdown, evaluate, format_stats, log_result
+from .data import fold_split
+from .evaluate import EXPERIMENTS, build_gt, density_breakdown, evaluate, format_stats, log_result
 from .infer import EnsemblePredictor, TiledPredictor, UltralyticsPredictor, predict_eval_frames
 from .ul_utils import evaluate_ultralytics, is_rtdetr, train_ultralytics, write_tile_data, write_yolo_data
 
@@ -39,9 +47,66 @@ class Spec:
         return Spec(**d)
 
 
+KAGGLE_INPUT = Path("/kaggle/input")
+_SKIP = {"images", "labels", "train", "val", "test", "weights", ".git"}   # large or irrelevant folders
+SESSION_HOURS = float(os.environ.get("VISDET_SESSION_HOURS", "12" if KAGGLE_INPUT.exists() else "inf"))
+SAVE_MARGIN = 0.4   # hours left free at the end of a session for Kaggle to save the output
+EVAL_HOURS = 0.3    # rough upper bound of one evaluation / test prediction
+
+
+class OutOfTime(RuntimeError):
+    pass
+
+
+def attached(pattern: str, max_depth: int = 5) -> list[Path]:
+    """Files matching ``pattern`` in the attached Kaggle inputs, whatever the mount layout
+    (``<slug>/``, ``notebooks/<user>/<slug>/``, ``datasets/<user>/<slug>/<folder>/``)."""
+    found = []
+    for root, dirs, _ in os.walk(KAGGLE_INPUT):
+        found += Path(root).glob(pattern)
+        depth = len(Path(root).relative_to(KAGGLE_INPUT).parts)
+        dirs[:] = [d for d in dirs if d not in _SKIP] if depth < max_depth else []
+    return sorted(found)
+
+
+def carry_over(runs_dir: Path, experiments: Path = EXPERIMENTS) -> list[str]:
+    """Resume from attached Kaggle outputs (an earlier session of this notebook, notebooks 05/06, or a
+    dataset holding a downloaded ``runs/`` folder): copy their Ultralytics runs (without ``last.pt``) into
+    ``runs_dir`` and add the experiment-log rows this checkout does not have yet. Each session's output
+    then holds everything done so far, so only the latest one needs to be attached."""
+    runs_dir, experiments = Path(runs_dir), Path(experiments)
+    restored = []
+    for best in attached("runs/*/weights/best.pt"):
+        src, dst = best.parents[1], Path(runs_dir) / best.parents[1].name
+        if not (dst / "weights" / "best.pt").exists():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("last.pt"), dirs_exist_ok=True)
+            restored.append(src.name)
+    results = experiments / "results.csv"
+    log = pd.read_csv(results) if results.exists() else pd.DataFrame({"run_id": []})
+    n = len(log)
+    for other in attached("experiments/results.csv"):
+        new = pd.read_csv(other)
+        new = new[~new["run_id"].isin(log["run_id"])]
+        for run_id in new["run_id"]:
+            if (other.parent / "runs" / run_id).is_dir():
+                shutil.copytree(other.parent / "runs" / run_id, experiments / "runs" / run_id, dirs_exist_ok=True)
+        log = pd.concat([log, new], ignore_index=True)
+    if len(log) > n:
+        log.to_csv(results, index=False)
+    return restored
+
+
+def _session_start() -> float:
+    try:
+        import psutil
+        return psutil.Process().create_time()   # kernel start = start of the Kaggle session
+    except Exception:
+        return time.time()
+
+
 def find_weights(run: str, runs_dir: Path) -> Path:
-    """Checkpoint of ``run`` in this session's runs or in an attached notebook output (Kaggle)."""
-    for p in [Path(runs_dir) / run / "weights" / "best.pt", *KAGGLE_NOTEBOOKS.glob(f"*/runs/{run}/weights/best.pt")]:
+    """Checkpoint of ``run`` in this session's runs or in an attached Kaggle output."""
+    for p in [Path(runs_dir) / run / "weights" / "best.pt", *attached(f"runs/{run}/weights/best.pt")]:
         if p.exists():
             return p
     raise FileNotFoundError(f"no checkpoint for {run}; train it or attach the notebook output that has it")
@@ -60,6 +125,52 @@ class Pipeline:
         self.base_cfg = run_config(base, runs) | {"name": base}
         self.train_kw, self.smoke_kw = train_kw, smoke_kw or {}
         self._data = {}
+        self.deadline = _session_start() + (SESSION_HOURS - SAVE_MARGIN) * 3600
+        self.stopped, self.failed = None, []
+
+    # ------------------------------------------------------------------ session control
+    def hours_left(self) -> float:
+        return (self.deadline - time.time()) / 3600
+
+    def _need(self, hours: float, what: str):
+        if self.hours_left() < hours:
+            raise OutOfTime(f"{what} needs ~{hours:.1f} h, {max(self.hours_left(), 0):.1f} h left in this session")
+
+    def attempt(self, what: str, fn, *args, **kw):
+        """``fn(*args, **kw)`` that never raises, so the notebook always finishes and its output can be
+        attached to the next session. Work that does not fit in the session stops everything after it;
+        an error is printed and recorded, and :meth:`end_stage` stops the stages that build on it."""
+        if self.stopped:
+            print(f"skipped {what}: {self.stopped}")
+            return None
+        try:
+            self._need(EVAL_HOURS, what)
+            return fn(*args, **kw)
+        except OutOfTime as e:
+            self.stopped = f"out of session time ({e})"
+            print(f"stopped: {e}")
+        except Exception:
+            traceback.print_exc()
+            self.failed.append(what)
+        return None
+
+    def run(self, spec: Spec, fold: int = 0) -> dict | None:
+        """:meth:`evaluate` under :meth:`attempt`; runs already in the experiment log are not repeated."""
+        run_id, results = self.run_id(spec, fold), EXPERIMENTS / "results.csv"
+        if results.exists() and run_id in set(pd.read_csv(results)["run_id"]):
+            print(f"{run_id}: already evaluated")
+            return None
+        return self.attempt(run_id, self.evaluate, spec, fold)
+
+    def end_stage(self, stage: str):
+        """Later stages build on this one: stop if any run so far failed or did not fit in the session."""
+        if self.failed and not self.stopped:
+            self.stopped = f"failed runs {self.failed}"
+        if self.stopped:
+            print(f"stage {stage} incomplete: {self.stopped}.\n"
+                  "Fix the error (if any), attach this version's output and run the notebook again.")
+        else:
+            print(f"stage {stage} complete ({self.hours_left():.1f} h left in this session)")
 
     # ------------------------------------------------------------------ helpers
     def run_id(self, spec: Spec, fold: int) -> str:
@@ -116,6 +227,7 @@ class Pipeline:
         cfg = self.base_cfg | spec.changes | {"name": run_id, "spec": asdict(spec)}
         for k in ("gpu_hours", "n_gpus"):
             cfg.pop(k, None)
+        self._need(((cfg | self.smoke_kw).get("time", 1.0) or 0) + 2 * EVAL_HOURS, f"training {run_id}")
         return train_ultralytics(cfg, self.data_yaml(spec, fold), self.runs, **(self.train_kw | self.smoke_kw))
 
     def evaluate(self, spec: Spec, fold: int = 0) -> dict:
