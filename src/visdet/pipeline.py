@@ -69,6 +69,16 @@ def attached(pattern: str, max_depth: int = 5) -> list[Path]:
     return sorted(found)
 
 
+def finished(best: Path) -> bool:
+    """Ultralytics strips the optimizer from ``best.pt`` only when training ends (``epoch = -1``);
+    a run cut off mid-training keeps it and must be trained again."""
+    import torch
+    try:
+        return torch.load(best, map_location="cpu", weights_only=False).get("epoch") == -1
+    except Exception:
+        return False
+
+
 def carry_over(runs_dir: Path, experiments: Path = EXPERIMENTS) -> list[str]:
     """Resume from attached Kaggle outputs (an earlier session of this notebook, notebooks 05/06, or a
     dataset holding a downloaded ``runs/`` folder): copy their Ultralytics runs (without ``last.pt``) into
@@ -78,7 +88,7 @@ def carry_over(runs_dir: Path, experiments: Path = EXPERIMENTS) -> list[str]:
     restored = []
     for best in attached("runs/*/weights/best.pt"):
         src, dst = best.parents[1], Path(runs_dir) / best.parents[1].name
-        if not (dst / "weights" / "best.pt").exists():
+        if not (dst / "weights" / "best.pt").exists() and finished(best):
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns("last.pt"), dirs_exist_ok=True)
             restored.append(src.name)
     results = experiments / "results.csv"
@@ -107,7 +117,7 @@ def _session_start() -> float:
 def find_weights(run: str, runs_dir: Path) -> Path:
     """Checkpoint of ``run`` in this session's runs or in an attached Kaggle output."""
     for p in [Path(runs_dir) / run / "weights" / "best.pt", *attached(f"runs/{run}/weights/best.pt")]:
-        if p.exists():
+        if p.exists() and finished(p):
             return p
     raise FileNotFoundError(f"no checkpoint for {run}; train it or attach the notebook output that has it")
 
