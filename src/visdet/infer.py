@@ -5,6 +5,7 @@ in the pixel space of the frame it received.
 """
 from __future__ import annotations
 
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -12,6 +13,9 @@ import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+
+# WBF drops degenerate boxes on its own; one warning per box floods the notebook output
+warnings.filterwarnings("ignore", message="Zero area box skipped")
 
 
 def load_frame(path: str | Path, size: tuple[int, int] | None = None) -> np.ndarray:

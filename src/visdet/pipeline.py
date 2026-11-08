@@ -38,6 +38,7 @@ class Spec:
     infer: str | None = None                       # None | "tta" | "tta_ms" | "tiles"
     weights_from: str | None = None                # reuse another run's checkpoint (inference-only change)
     ensemble: list[str] = field(default_factory=list)  # WBF over these runs' checkpoints
+    base_run: str | None = None                    # start from this run's config instead of the pipeline's BASE
 
     def but(self, name: str, **kw) -> "Spec":
         """Copy with a new name and some fields changed (``changes`` are merged, not replaced)."""
@@ -234,7 +235,8 @@ class Pipeline:
             return find_weights(run_id, self.runs), run_config(run_id, self.runs)
         except FileNotFoundError:
             pass
-        cfg = self.base_cfg | spec.changes | {"name": run_id, "spec": asdict(spec)}
+        base = run_config(spec.base_run, self.runs) if spec.base_run else self.base_cfg
+        cfg = base | spec.changes | {"name": run_id, "spec": asdict(spec)}
         for k in ("gpu_hours", "n_gpus"):
             cfg.pop(k, None)
         self._need(((cfg | self.smoke_kw).get("time", 1.0) or 0) + 2 * EVAL_HOURS, f"training {run_id}")
