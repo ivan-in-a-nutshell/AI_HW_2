@@ -1,0 +1,11 @@
+name: pipe_ens
+changes: {}
+masked: true
+train_step: 10
+tiles: false
+infer: null
+weights_from: null
+ensemble:
+- pipe_m_f2
+- rtdetr_matcher_f2
+base_run: null

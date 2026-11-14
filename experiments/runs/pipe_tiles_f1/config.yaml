@@ -1,0 +1,26 @@
+framework: ultralytics
+model: yolo11s.pt
+imgsz: 1280
+time: 1.0
+optimizer: SGD
+lr0: 0.01
+epochs: 100
+batch: 16
+max_det: 500
+cache: false
+seed: 42
+plots: false
+name: pipe_tiles_f1
+patch:
+  tal_topk: 13
+spec:
+  name: pipe_tiles
+  changes: {}
+  masked: true
+  train_step: 10
+  tiles: true
+  infer: null
+  weights_from: null
+  ensemble: []
+gpu_hours: 2.03
+n_gpus: 2

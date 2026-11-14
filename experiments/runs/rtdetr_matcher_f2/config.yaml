@@ -1,0 +1,34 @@
+framework: ultralytics
+model: rtdetr-l.pt
+imgsz: 1280
+time: 1.0
+epochs: 100
+batch: 8
+optimizer: AdamW
+lr0: 0.0001
+weight_decay: 0.0001
+warmup_epochs: 1
+warmup_bias_lr: 0.0
+max_det: 300
+cache: false
+seed: 42
+plots: false
+name: rtdetr_matcher_f2
+patch:
+  matcher_cost:
+    class: 2
+    bbox: 5
+    giou: 5
+spec:
+  name: rtdetr_matcher
+  changes: {}
+  masked: true
+  train_step: 10
+  tiles: false
+  infer: null
+  weights_from: null
+  ensemble: []
+  base_run: rtdetr_matcher
+gpu_hours: 2.07
+n_gpus: 2
+inference: {}

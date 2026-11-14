@@ -1,0 +1,31 @@
+framework: ultralytics
+model: yolo11m.pt
+imgsz: 1280
+time: 1.0
+optimizer: SGD
+lr0: 0.002
+epochs: 100
+batch: 8
+max_det: 500
+cache: false
+seed: 42
+plots: false
+name: pipe_m_lr_f2
+patch:
+  tal_topk: 13
+spec:
+  name: pipe_m_lr
+  changes:
+    model: yolo11m.pt
+    batch: 8
+    lr0: 0.002
+  masked: true
+  train_step: 10
+  tiles: true
+  infer: null
+  weights_from: null
+  ensemble: []
+  base_run: null
+gpu_hours: 2.06
+n_gpus: 2
+inference: {}

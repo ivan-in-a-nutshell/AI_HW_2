@@ -1,0 +1,36 @@
+framework: ultralytics
+model: yolo11s.pt
+imgsz: 1280
+time: 1.0
+optimizer: SGD
+lr0: 0.01
+epochs: 100
+batch: 16
+max_det: 500
+cache: false
+seed: 42
+plots: false
+name: pipe_degrade
+patch:
+  tal_topk: 13
+  degrade_p: 0.25
+  degrade_range:
+  - 0.5
+  - 0.8
+spec:
+  name: pipe_degrade
+  changes:
+    patch:
+      tal_topk: 13
+      degrade_p: 0.25
+      degrade_range:
+      - 0.5
+      - 0.8
+  masked: true
+  train_step: 10
+  tiles: false
+  infer: null
+  weights_from: null
+  ensemble: []
+gpu_hours: 2.03
+n_gpus: 2

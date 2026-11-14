@@ -12,7 +12,7 @@ evaluated run is logged to `experiments/results.csv` (per-run metrics, history a
 | 04 | `04_one_stage_anchor.ipynb` | Kaggle, 2× T4 | RetinaNet: baseline + 3 tweaks, comparison with Faster R-CNN | ~8 |
 | 05 | `05_anchor_free.ipynb` | Kaggle, 2× T4 | YOLO11s: resolution, P2 head, TAL top-k; first submission | ~10 |
 | 06 | `06_query_based.ipynb` | Kaggle, 2× T4 | RT-DETR: queries, matching cost, backbone LR; curves vs YOLO | ~8 |
-| 07 | `07_pipeline.ipynb` | Kaggle, 2× T4 | data/inference vs model experiments, OOF check, final submissions | ~25 |
+| 07 | `07_pipeline.ipynb` | Kaggle, 2× T4 | data/inference vs model experiments, OOF check, ensemble + learning-rate follow-up (E), final submissions | ~50 (2–3 sessions) |
 
 ## Kaggle set-up
 
@@ -23,6 +23,9 @@ evaluated run is logged to `experiments/results.csv` (per-run metrics, history a
    The outputs of notebooks 05 and 06 in notebook 07, which needs their checkpoints.
 3. **Session.** Accelerator *GPU T4 ×2*, Internet on, *Save & Run All*. Runs that already have a
    checkpoint in `/kaggle/working/runs` are skipped, so an interrupted notebook can be resumed.
+   Notebook 07 needs more than one 12-hour session: it does not start a run that would not fit (set
+   `VISDET_SESSION_HOURS` lower when the weekly quota is the limit), always finishes cleanly, and on the
+   next run restores every finished run from its own attached output (`visdet.pipeline.carry_over`).
 4. **Afterwards.** Download `repo/experiments/` and `repo/images/` from the notebook output and commit
    them. Later notebooks and the report read the shared log from there.
 
